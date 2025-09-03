@@ -1,0 +1,133 @@
+{
+  "name": "Inventory",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "compatible",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -384,
+        -96
+      ],
+      "id": "dcc10248-d329-48ed-b463-2bfa681d7a88",
+      "name": "Webhook",
+      "webhookId": "de633d9f-0321-455e-a621-f65938850203"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all vehicle inventory rows as input\nconst rows = $input.all().map(item => item.json);\n\n// Get user query and normalize\nconst query = ($json.query || \"\").toLowerCase().trim();\n\nif (!query) {\n  // No query: return all vehicles (optional, or empty to reduce payload)\n  return rows.map(r => ({ json: r }));\n}\n\n// Split query into words/keywords\nconst keywords = query.split(' ').filter(k => k);\n\n// List known manufacturers to identify in query\nconst knownManufacturers = ['toyota', 'ford', 'bmw', 'honda', 'nissan', 'chevrolet', 'suzuki'];\n\n// Extract manufacturer and model keywords\nconst manufacturerKeyword = keywords.find(k => knownManufacturers.includes(k)) || null;\nconst modelKeyword = keywords.find(k => k !== manufacturerKeyword) || null;\n\n// Filter rows matching query parts\nconst filtered = rows.filter(row => {\n  const manufacturer = row.Manufacturer ? row.Manufacturer.toLowerCase() : \"\";\n  const model = row.Model ? row.Model.toLowerCase() : \"\";\n  const variant = row[\"Descriptive Variant\"] ? row[\"Descriptive Variant\"].toLowerCase() : \"\";\n\n  const manufacturerMatch = manufacturerKeyword ? manufacturer.includes(manufacturerKeyword) : true;\n  const modelMatch = modelKeyword ? (model.includes(modelKeyword) || variant.includes(modelKeyword)) : true;\n\n  return manufacturerMatch && modelMatch;\n});\n\nif (filtered.length === 0) {\n  // No exact match, try returning all vehicles of manufacturer (if known)\n  if (manufacturerKeyword) {\n    const fallback = rows.filter(r => r.Manufacturer && r.Manufacturer.toLowerCase().includes(manufacturerKeyword));\n    if (fallback.length > 0) {\n      return fallback.map(r => ({\n        json: {\n          Manufacturer: r.Manufacturer,\n          Model: r.Model,\n          Variant: r[\"Descriptive Variant\"],\n          Price: r.Price,\n          Colour: r.Colour,\n          Fuel: r[\"Fuel Type Name\"],\n          Transmission: r[\"Transmission Type\"],\n          Location: r[\"Location Name\"],\n          Features: r.Features,\n          VIN_Last4: (typeof r.VIN === 'string') ? r.VIN.slice(-4) : null\n        }\n      }));\n    }\n  }\n  // If no matches at all, return message\n  return [{ json: { message: \"No matching vehicles found. Please try another model or manufacturer.\" } }];\n}\n\n// Return filtered vehicles exactly matching query\nreturn filtered.map(r => ({\n  json: {\n    Manufacturer: r.Manufacturer,\n    Model: r.Model,\n    Variant: r[\"Descriptive Variant\"],\n    Price: r.Price,\n    Colour: r.Colour,\n    Fuel: r[\"Fuel Type Name\"],\n    Transmission: r[\"Transmission Type\"],\n    Location: r[\"Location Name\"],\n    Features: r.Features,\n    VIN_Last4: (typeof r.VIN === 'string') ? r.VIN.slice(-4) : null\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        48,
+        -96
+      ],
+      "id": "bdfd0426-dcd7-45be-ae69-9745a18ed4e5",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$items().map(item => item.json)}}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        256,
+        -96
+      ],
+      "id": "c56db811-3d46-4225-9b78-67c36e456194",
+      "name": "Respond to Webhook",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1h6d3iC_tqc_yVmoiQtRWD75GMEA1ChCaUGaWaQlPQr8",
+          "mode": "list",
+          "cachedResultName": "vehicle_inventory_compatible",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h6d3iC_tqc_yVmoiQtRWD75GMEA1ChCaUGaWaQlPQr8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h6d3iC_tqc_yVmoiQtRWD75GMEA1ChCaUGaWaQlPQr8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -160,
+        -96
+      ],
+      "id": "4afd59c3-d9f1-4d9f-8af9-a11f1bb41ded",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GzUgHkwshnNXltNM",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "42b64a4a-19a3-4841-bcdd-aadb0a933439",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78009fc29414294678e81009d661eb841edc07c8d795d800a134b1c710f7805e"
+  },
+  "id": "SgBTUi7Fcpi16icr",
+  "tags": []
+}

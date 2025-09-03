@@ -1,0 +1,627 @@
+{
+  "name": "Raji - Calendar Booking V1",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3b59e5b0-1233-4e9d-96d7-dc081dd40944",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1616,
+        176
+      ],
+      "id": "b34b0fc5-12e8-49be-9434-856cfbd121c3",
+      "name": "Webhook",
+      "webhookId": "3b59e5b0-1233-4e9d-96d7-dc081dd40944"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "eideacssemrush@gmail.com",
+          "mode": "list",
+          "cachedResultName": "eideacssemrush@gmail.com"
+        },
+        "timeMin": "={{ $json.debug_start }}",
+        "timeMax": "={{ $json.debug_end }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -80,
+        96
+      ],
+      "id": "1c631554-40fc-4199-afc3-3e47cf4823c5",
+      "name": "Get availability in a calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MFRKdQqtC4brkj4x",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $input.item.json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1408,
+        544
+      ],
+      "id": "7673d3fc-353f-43e8-8d42-f8e4d4bbdbba",
+      "name": "Busy Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"message\": \"Appointment booked\",\n  \"pretty\": \"{{$item(0).$node['Check Office hours and finalise booking'].json.pretty}}\",\n  \"weekday\": \"{{$item(0).$node['Check Office hours and finalise booking'].json.weekday}}\",\n  \"start\": \"{{$item(0).$node['Check Office hours and finalise booking'].json.preferred_start}}\",\n  \"end\": \"{{$item(0).$node['Check Office hours and finalise booking'].json.endDateTime}}\",\n  \"timeZone\": \"{{$item(0).$node['Check Office hours and finalise booking'].json.timeZone}}\",\n  \"title\": \"{{$item(0).$node['Check Office hours and finalise booking'].json.meetingTitle}}\",\n  \"eventId\": \"{{$json.id}}\",\n  \"htmlLink\": \"{{$json.htmlLink}}\",\n  \"meetLink\": \"{{$json.hangoutLink || $json.conferenceData?.entryPoints?.[0]?.uri}}\",\n  \"organizer\": \"{{$json.organizer?.email}}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "cacd4f16-6a9b-43e5-9f4d-078b6d41a523",
+      "name": "Success Response"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ String($item(0).$node[\"Check Office hours and finalise booking\"].json.email || \"\").trim() }}\n",
+        "subject": "={{ $json.summary || \"Meeting with eIdea\" }}\n\nDate and Time: {{ $json.start.dateTime }}\n\n",
+        "message": "=Hi {{$item(0).$node[\"Check Office hours and finalise booking\"].json.fullName}},\n\nYour appointment is confirmed.\n\nWhen: {{$item(0).$node[\"Check Office hours and finalise booking\"].json.weekday}}, {{$item(0).$node[\"Check Office hours and finalise booking\"].json.pretty}}\n\n**Meeting Title**: Meeting with e-Idea Consultancy Services\n\n{{ $json.hangoutLink || $json.conferenceData?.entryPoints?.[0]?.uri\n  ? \"Google Meet: \" + ($json.hangoutLink || $json.conferenceData.entryPoints[0].uri)\n  : \"\" }}\n\nThanks,  \ne-Idea Consultancy Services\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "8bf5175b-c622-4465-a640-7613a901cb89",
+      "name": "Send a message",
+      "webhookId": "d4146b06-5f83-4e6c-b980-a5cd4a95485d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "sJbxJkJRwX5f30RY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "eideacssemrush@gmail.com",
+          "mode": "list",
+          "cachedResultName": "eideacssemrush@gmail.com"
+        },
+        "timeMin": "={{ $node[\"Check Office hours and finalise booking\"].json.preferred_start }}",
+        "timeMax": "={{ $node[\"Check Office hours and finalise booking\"].json.windowEnd }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        592
+      ],
+      "id": "9f4416a7-3eb5-485b-ae78-aadc4018b9d2",
+      "name": "List events(next 6h)",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MFRKdQqtC4brkj4x",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Context from the first Code node:\nconst ctx = $node[\"Check Office hours and finalise booking\"].json;\nconst tz = ctx.timeZone;\nconst durationMin = ctx.duration;\nconst reqStart = new Date(ctx.preferred_start).getTime();\nconst winEndMs = new Date(ctx.windowEnd).getTime();\n\n// Helpers\nfunction toMs(s){ const d=s?new Date(s).getTime():NaN; return isNaN(d)?null:d; }\n\n// Collect busy intervals from Google \"Get Many\" output\nconst events = items.map(i => i.json || {});\nlet intervals = [];\nfor (const ev of events) {\n  const st = ev.start?.dateTime || ev.start?.date;\n  const en = ev.end?.dateTime || ev.end?.date;\n  const sMs = toMs(st), eMs = toMs(en);\n  if (sMs!==null && eMs!==null) {\n    const s = Math.max(sMs, reqStart);\n    const e = Math.min(eMs, winEndMs);\n    if (e>s) intervals.push([s,e]);\n  }\n}\n\n// Merge overlaps\nintervals.sort((a,b)=>a[0]-b[0]);\nconst merged=[];\nfor (const iv of intervals){\n  if(!merged.length || iv[0]>merged[merged.length-1][1]) merged.push(iv);\n  else merged[merged.length-1][1]=Math.max(merged[merged.length-1][1], iv[1]);\n}\n\n// Find next two free gaps of required duration\nconst needed = durationMin*60*1000;\nconst suggestions=[];\nlet cursor=reqStart;\nfor(const [bS,bE] of merged){\n  if(cursor+needed<=bS){ suggestions.push([cursor,cursor+needed]); if(suggestions.length===2) break; }\n  if(cursor<bE) cursor=bE;\n}\nwhile(suggestions.length<2 && cursor+needed<=winEndMs){\n  suggestions.push([cursor,cursor+needed]);\n  cursor+=needed;\n}\n\n// Formatting helpers\nconst pad2 = n => String(n).padStart(2,'0');\nfunction parseOffsetToMinutes(s){\n  s=(s||'').replace(/^UTC|^GMT/i,'').trim();\n  const m=s.match(/^([+-])(\\d{1,2})(?::?(\\d{2}))?$/); if(!m) return null;\n  const sign=m[1]==='-'?-1:1, h=parseInt(m[2]||'0',10), min=parseInt(m[3]||'0',10);\n  return sign*(h*60+min);\n}\nfunction offsetMinutesForInstant(tzName, utcMs){\n  try{\n    const fmt=new Intl.DateTimeFormat('en-US',{timeZone:tzName,timeZoneName:'shortOffset',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});\n    const parts=Object.fromEntries(fmt.formatToParts(new Date(utcMs)).map(p=>[p.type,p.value]));\n    const gmt=(parts.timeZoneName||'GMT+0').replace('GMT','').trim();\n    return parseOffsetToMinutes(gmt) ?? 0;\n  }catch{ return 240; } // Dubai fallback\n}\nfunction rfc3339FromUtc(utcMs, tzName){\n  const off=offsetMinutesForInstant(tzName, utcMs);\n  const local=new Date(utcMs+off*60*1000);\n  const sign=off>=0?'+':'-', abs=Math.abs(off);\n  const offStr=`${sign}${pad2(Math.trunc(abs/60))}:${pad2(abs%60)}`;\n  return `${local.getUTCFullYear()}-${pad2(local.getUTCMonth()+1)}-${pad2(local.getUTCDate())}`\n       + `T${pad2(local.getUTCHours())}:${pad2(local.getUTCMinutes())}:${pad2(local.getUTCSeconds())}${offStr}`;\n}\nfunction pretty(startMs,endMs){\n  try{\n    const s=new Intl.DateTimeFormat('en-GB',{timeZone:tz,weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(startMs));\n    const e=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(endMs));\n    return `${s}–${e} ${tz}`;\n  }catch{ return `${new Date(startMs).toISOString()}–${new Date(endMs).toISOString()}`; }\n}\n\nconst alts = suggestions.slice(0,2).map(([s,e])=>({ start:rfc3339FromUtc(s,tz), end:rfc3339FromUtc(e,tz), pretty:pretty(s,e) }));\n\nreturn [{\n  json:{\n    status:'busy',\n    message:'Requested slot unavailable.',\n    requested:{ start:ctx.preferred_start, end:ctx.endDateTime, pretty:ctx.pretty, timeZone:tz },\n    alternatives: alts\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        560
+      ],
+      "id": "c498c204-2a50-4c26-9342-b58d277cf6cc",
+      "name": "Find Gaps"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -96,
+        432
+      ],
+      "id": "2466f55f-41b8-4dd7-a891-b53a30830494",
+      "name": "Office Hours Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f5488da7-8872-48cb-a456-c23f06b7dcb8",
+              "leftValue": "={{ $json.business_ok }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ true }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        176
+      ],
+      "id": "9ecf95d4-8291-4a20-b5ad-957b3d0ecebf",
+      "name": "Business Hours"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "61b4436a-b635-43d7-9036-0f8bb659fb37",
+              "leftValue": "={{ $json.available }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        96
+      ],
+      "id": "e93fe911-9b49-4e90-a455-559cfdce3a24",
+      "name": "Available"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "eideacssemrush@gmail.com",
+          "mode": "list",
+          "cachedResultName": "eideacssemrush@gmail.com"
+        },
+        "start": "={{ $json.nodes[0].parameters.values.string[1].value }}",
+        "end": "={{ $json.nodes[0].parameters.values.string[2].value }}",
+        "useDefaultReminders": "={{ true }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $json.nodes[0].parameters.values.string[0].value }}"
+          ],
+          "conferenceDataUi": {
+            "conferenceDataValues": {
+              "conferenceSolution": "=hangoutsMeet"
+            }
+          },
+          "description": "=This meeting is with {{ $json.fullName || $node['Check Office hours and finalise booking'].json.fullName }}.\nReason: {{ $json.meetingReason || 'No reason specified.' }}\nOrganised by e-Idea Consultancy Services.\n",
+          "sendUpdates": "all",
+          "summary": "={{ $node['Check Office hours and finalise booking'].json.meetingTitle || ('Meeting with ' + $node['Check Office hours and finalise booking'].json.fullName) }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        -32
+      ],
+      "id": "e60e0a66-d959-4fcd-9a4f-05740c9d7e5f",
+      "name": "Create an Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "MFRKdQqtC4brkj4x",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f1fe1d94-0eea-4872-a2bf-7420332ac0c4",
+              "leftValue": "=={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        16
+      ],
+      "id": "d359975e-cd8a-491a-bb69-52240df04b6f",
+      "name": "Created"
+    },
+    {
+      "parameters": {
+        "jsCode": "const src = $json.body ?? $json ?? {};\nconst keys = Object.keys(src);\n\nconst fullNameRaw = (src.fullName ?? src.full_name ?? src.fullname ?? src.user_name ?? '').toString().trim();\nconst emailRaw    = (src.email    ?? src.user_email  ?? '').toString();\nconst phoneRaw    = (src.phone    ?? src.user_phone  ?? '').toString();\nconst dateRaw     = (src.appointment_date ?? src.date ?? '').toString();\nconst timeRaw0    = (src.appointment_time ?? src.time ?? '').toString();\nconst tzRaw       = (src.timezone ?? 'Asia/Dubai').toString().trim();\nconst durationRaw = src.duration;\nconst serviceRaw  = (src.service ?? src.industry ?? src.service_of_interest ?? '').toString().trim();\n\nconst pad2 = n => String(n).padStart(2,'0');\nconst cleanPhone = p => String(p).replace(/[^\\d+]/g,'');\nconst normalizeEmail = e => String(e).toLowerCase().trim()\n  .replace(/\\s+at\\s+/gi,'@').replace(/\\s+dot\\s+/gi,'.').replace(/\\s+/g,'');\n\nreturn {\n  json: {\n    fullName: fullNameRaw,\n    email: normalizeEmail(emailRaw).replace(/^=/, \"\").trim(),\n    phone: cleanPhone(phoneRaw),\n    appointment_date: dateRaw,\n    appointment_time: timeRaw0,\n    timezone: tzRaw,\n    durationRaw: durationRaw,\n    service: serviceRaw,\n    _receivedKeys: keys\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        176
+      ],
+      "id": "c35820bb-8beb-4c12-979b-bede8187ae27",
+      "name": "Input Parser"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "try {\n  const fullName = $json.fullName || $json.name || '';\n  const emailRaw = $json.email || '';\n  const phoneRaw = $json.phone || '';\n  const dateRaw = $json.appointment_date || '';\n  const timeRaw = $json.appointment_time || '';\n  const tzOffsetMins = 4 * 60; // Dubai is always UTC+4, no DST\n\n  // Validate presence\n  if (!dateRaw || !timeRaw) {\n    throw new Error(`Missing date or time. Input was dateRaw=[${dateRaw}], timeRaw=[${timeRaw}]`);\n  }\n\n  // Parse date \"DD-MM-YY\" and time \"HH:mm\"\n  const dateMatch = dateRaw.match(/^(\\d{2})-(\\d{2})-(\\d{2,4})$/);\n  if (!dateMatch) throw new Error(`Invalid date format: [${dateRaw}]`);\n  const [_, d, m, y] = dateMatch;\n  const year = y.length === 2 ? Number('20' + y) : Number(y);\n  const month = Number(m) - 1;\n  const day = Number(d);\n\n  const timeTmp = timeRaw.replace(/\\s*(am|pm)/i, '').replace('.', ':').trim();\n  const [hh, mm] = timeTmp.split(':').map(Number);\n\n  // Construct UTC date, then apply offset for Dubai manually\n  const startUTC = new Date(Date.UTC(year, month, day, hh - 4, mm));\n  const startDubai = new Date(startUTC.getTime() + (tzOffsetMins * 60000));\n  const endDubai = new Date(startDubai.getTime() + 30 * 60000); // 30 minutes duration\n  const now = new Date();\n  // Check for Past date\n  const nowDubai = new Date(now.getTime() + tzOffsetMins * 60000);\n\nif (startDubai < nowDubai) {\n  return {\n    json: {\n      error: 'Past date booking not allowed',\n      isPastDate: true,\n      fullName,\n      email: emailRaw.trim().toLowerCase(),\n      phone: phoneRaw.replace(/\\D+/g, ''),\n      appointment_date: dateRaw,\n      appointment_time: timeRaw,\n      timezone: 'Asia/Dubai',\n    }\n  };\n}\n\n\n  // Weekday calculation\n  const weekdays = [\"Sunday\",\"Monday\",\"Tuesday\",\"Wednesday\",\"Thursday\",\"Friday\",\"Saturday\"];\n  const weekday = weekdays[startDubai.getDay()];\n\n  // Pretty formatting\n  const months = [\"Jan\", \"Feb\", \"Mar\", \"Apr\", \"May\", \"Jun\", \"Jul\", \"Aug\", \"Sep\", \"Oct\", \"Nov\", \"Dec\"];\n  const pretty = `${weekday}, ${startDubai.getDate()} ${months[startDubai.getMonth()]} ${startDubai.getFullYear()}, ${('0'+startDubai.getHours()).slice(-2)}:${('0'+startDubai.getMinutes()).slice(-2)}`;\n\n  // Office hours logic (Mon-Fri 9:00-18:00, Sat 9:00-12:00)\n  const dayNum = startDubai.getDay(); // 0=Sun, 6=Sat\n  const hour = startDubai.getHours();\n  let business_ok = false;\n  if (dayNum >= 1 && dayNum <= 5) {\n    business_ok = (hour >= 9 && hour < 18);\n  } else if (dayNum === 6) {\n    business_ok = (hour >= 9 && hour < 12);\n  }\n\n  // Email validation\n  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(emailRaw)) {\n    throw new Error(`Invalid email address: ${emailRaw}`);\n  }\n\n  // ISO string with Dubai offset\n  function toDubaiISOString(date) {\n    const y = date.getFullYear();\n    const mo = ('0' + (date.getMonth()+1)).slice(-2);\n    const d = ('0' + date.getDate()).slice(-2);\n    const h = ('0' + date.getHours()).slice(-2);\n    const mi = ('0' + date.getMinutes()).slice(-2);\n    const s = ('0' + date.getSeconds()).slice(-2);\n    return `${y}-${mo}-${d}T${h}:${mi}:${s}+04:00`;\n  }\n\n  return {\n    json: {\n      fullName,\n      email: emailRaw.trim().toLowerCase(),\n      phone: phoneRaw.replace(/\\D+/g, ''),\n      appointment_date: `${('0'+startDubai.getDate()).slice(-2)}-${('0'+(startDubai.getMonth()+1)).slice(-2)}-${String(startDubai.getFullYear()).slice(-2)}`,\n      appointment_time: `${('0'+startDubai.getHours()).slice(-2)}:${('0'+startDubai.getMinutes()).slice(-2)}`,\n      isoStart: toDubaiISOString(startDubai),\n      isoEnd: toDubaiISOString(endDubai),\n      weekday,\n      pretty,\n      business_ok,\n      meetingTitle: `Meeting with e-Idea - ${fullName}`,\n      hangoutLink: '',\n      timezone: 'Asia/Dubai',\n      meetingDescription: `This meeting is scheduled with ${fullName} via e-Idea Consultancy Services.`,\n    }\n  };\n\n} catch(err) {\n  return {\n    json: {\n      error: err.message,\n      stack: err.stack,\n      dateInput: $json.appointment_date,\n      timeInput: $json.appointment_time\n    }\n  };\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        176
+      ],
+      "id": "510d4c05-3cad-41d6-8af1-0555e6fa47dd",
+      "name": "Check Office hours and finalise booking",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"debug_fullName\": \"{{$json.fullName}}\",\n  \"debug_email\": \"{{$json.email}}\",\n  \"debug_appointment_date\": \"{{$json.appointment_date}}\",\n  \"debug_appointment_time\": \"{{$json.appointment_time}}\",\n  \"debug_isoStart\": \"{{$json.isoStart || ''}}\",\n  \"debug_isoEnd\": \"{{$json.isoEnd || ''}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1072,
+        176
+      ],
+      "id": "d813848d-7c77-4891-94f6-8c0ac657c836",
+      "name": "Debug Input Data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d7d56dbe-c865-4ee6-b510-e165ec003e8e",
+              "name": "=fullName",
+              "value": "={{ $json.debug_fullName }}",
+              "type": "string"
+            },
+            {
+              "id": "e418325e-108d-4be6-9681-49b06058caae",
+              "name": "=email",
+              "value": "={{ $json.debug_email }}",
+              "type": "string"
+            },
+            {
+              "id": "ae17a0c7-51e6-4e06-940c-814e2230b9ff",
+              "name": "=appointment_date",
+              "value": "={{ $json.debug_appointment_date }}",
+              "type": "string"
+            },
+            {
+              "id": "a1af0c07-4572-42b7-9768-2947b7492c44",
+              "name": "=appointment_time",
+              "value": "={{ $json.debug_appointment_time }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        176
+      ],
+      "id": "e061ef39-72e5-48dd-bfde-7a3c76f90f96",
+      "name": "Fields Mapping"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"debug_start\": \"{{ $json.isoStart }}\",\n  \"debug_end\": \"{{ $json.isoEnd }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -272,
+        -96
+      ],
+      "id": "f58c76aa-fc38-4fe5-a996-f2780edc4843",
+      "name": "Debug Start and End"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"nodes\": [\n    {\n      \"parameters\": {\n        \"values\": {\n          \"string\": [\n            {\n              \"name\": \"cleaned_email\",\n              \"value\": \"{{ $('Check Office hours and finalise booking').item.json.email }}\"\n            },\n            {\n              \"name\": \"isoStart\",\n              \"value\": \"{{ $('Check Office hours and finalise booking').item.json.isoStart }}\"\n            },\n            {\n              \"name\": \"isoEnd\",\n              \"value\": \"{{ $('Check Office hours and finalise booking').item.json.isoEnd }}\"\n            },\n            {\n              \"name\": \"fullName\",\n              \"value\": \"{{ $('Check Office hours and finalise booking').item.json.fullName }}\"\n            }\n          ]\n        }\n      },\n      \"name\": \"Prepare Event Data\",\n      \"type\": \"n8n-nodes-base.set\",\n      \"typeVersion\": 1,\n      \"position\": [600, 300]\n    }\n  ]\n}\n\n\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        -192
+      ],
+      "id": "6d9def83-c66c-4cbc-975f-f9b64e6c6d8f",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Input Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar": {
+      "main": [
+        [
+          {
+            "node": "Available",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List events(next 6h)": {
+      "main": [
+        [
+          {
+            "node": "Find Gaps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Gaps": {
+      "main": [
+        [
+          {
+            "node": "Busy Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Hours": {
+      "main": [
+        [
+          {
+            "node": "Debug Start and End",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Office Hours Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Available": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List events(next 6h)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an Event": {
+      "main": [
+        [
+          {
+            "node": "Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Created": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List events(next 6h)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Parser": {
+      "main": [
+        [
+          {
+            "node": "Debug Input Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Office hours and finalise booking": {
+      "main": [
+        [
+          {
+            "node": "Business Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Office Hours Response": {
+      "main": [
+        []
+      ]
+    },
+    "Debug Input Data": {
+      "main": [
+        [
+          {
+            "node": "Fields Mapping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fields Mapping": {
+      "main": [
+        [
+          {
+            "node": "Check Office hours and finalise booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debug Start and End": {
+      "main": [
+        [
+          {
+            "node": "Get availability in a calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create an Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "92d5275c-e320-45a8-8808-73bb63e688e4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78009fc29414294678e81009d661eb841edc07c8d795d800a134b1c710f7805e"
+  },
+  "id": "t0BQkN8s7pnfONJj",
+  "tags": [
+    {
+      "createdAt": "2025-08-29T15:47:41.118Z",
+      "updatedAt": "2025-08-29T15:47:41.118Z",
+      "id": "6z7eowVtjYscWCnr",
+      "name": "Testing"
+    }
+  ]
+}
