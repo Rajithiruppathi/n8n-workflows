@@ -1,0 +1,324 @@
+{
+  "name": "Transcripts",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.vapi.ai/call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer ee5cb409-46dd-445e-8f14-270f5fc10faf"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -144,
+        -128
+      ],
+      "id": "e4508077-7325-413d-ad74-1f6b601ae6ac",
+      "name": "Fetch Transcripts"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -352,
+        -128
+      ],
+      "id": "8ad56821-2a8c-464a-bcbd-3e72662efb56",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// If the transcript is an array of segments, join them into one string\n/**let fullTranscript = '';\n\nif (Array.isArray(items[0].json.transcript)) {\n  fullTranscript = items[0].json.transcript.join(' ');\n} else if (typeof items[0].json.transcript === 'string') {\n  fullTranscript = items[0].json.transcript;\n} else {\n  fullTranscript = 'No transcript';\n}\n\n// Return one item with the aggregated data and original fields\nreturn [{\n  json: {\n    phoneNumber: items[0].json.phoneNumber || 'N/A',\n    name: items[0].json.name || 'Unknown',\n    createdAt: items[0].json.createdAt || 'N/A',\n    duration: items[0].json.duration || items[0].json.callDuration || '0',\n    status: items[0].json.status || 'Unknown',\n    summary: items[0].json.summary || 'No summary available',\n    leadScore: items[0].json.leadScore || '0',\n    transcript: fullTranscript,\n  }\n}];**/\n\nreturn items.map(item => {\n  let fullTranscript = '';\n  if (Array.isArray(item.json.transcript)) {\n    fullTranscript = item.json.transcript.join(' ');\n  } else if (typeof item.json.transcript === 'string') {\n    fullTranscript = item.json.transcript;\n  } else {\n    fullTranscript = 'No transcript';\n  }\n  return {\n    json: {\n      phoneNumber: item.json.phoneNumber || 'N/A',\n      name: item.json.name || 'Unknown',\n      createdAt: item.json.createdAt || 'N/A',\n      duration: item.json.duration || item.json.callDuration || '0',\n      status: item.json.status || 'Unknown',\n      summary: item.json.summary || 'No summary available',\n      leadScore: item.json.leadScore || '0',\n      transcript: fullTranscript,\n    }\n  };\n});\n\n \n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        -128
+      ],
+      "id": "ed17f315-f666-43a6-bfe8-750ca9e4a7cc",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e75d832d-c04d-4a90-83fa-e6561ac6fb33",
+              "name": "Phone",
+              "value": "={{ $json.phoneNumber }}",
+              "type": "string"
+            },
+            {
+              "id": "b33e9b4b-4b6d-4101-8e25-bcce8d94abae",
+              "name": "Name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "12cafa55-e4c3-4b81-9007-483be7f0225e",
+              "name": "Called At",
+              "value": "={{ $json.createdAt }}",
+              "type": "string"
+            },
+            {
+              "id": "a2d32f18-bb17-4713-83ec-c65157fba092",
+              "name": "=Call Duration",
+              "value": "={{ $json.duration }}",
+              "type": "string"
+            },
+            {
+              "id": "c056ebaa-d2a3-4357-9be0-16b22d1a9e4b",
+              "name": "Call Status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "1fffbc15-13b1-4f9e-9e75-6c02b9cb7287",
+              "name": "Call Summary",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "192bf207-8bff-46e5-ac44-d787c64e07b9",
+              "name": "=Lead Score",
+              "value": "={{ $json.leadScore }}",
+              "type": "string"
+            },
+            {
+              "id": "8d54a5cb-0cc6-4b65-a764-e4010519ce45",
+              "name": "=Transcript",
+              "value": "={{ $json.transcript }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        -128
+      ],
+      "id": "346b31a4-0532-4f6e-89a7-c212d0e22974",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1PYyieSXST3exfahAab3O_5hpaGgIyPZrjo_WKONzJDk",
+          "mode": "list",
+          "cachedResultName": "Vapi - Transcripts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PYyieSXST3exfahAab3O_5hpaGgIyPZrjo_WKONzJDk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "eLumi",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PYyieSXST3exfahAab3O_5hpaGgIyPZrjo_WKONzJDk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Phone": "={{ $json.Phone }}",
+            "Name": "={{ $json.Name }}",
+            "Called At": "={{ $json['Called At'] }}",
+            "Call Duration": "={{ $json['Call Duration'] }}",
+            "Call Status": "={{ $json['Call Status'] }}",
+            "Call Summary": "={{ $json['Call Summary'] }}",
+            "Lead Score": "={{ $json['Lead Score'] }}",
+            "Transcript": "={{ $json.Transcript }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Called At",
+              "displayName": "Called At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Call Duration",
+              "displayName": "Call Duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Call Status",
+              "displayName": "Call Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Call Summary",
+              "displayName": "Call Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "{\"Phone\":\"N/A\",\"Name\":\"Unknown\",\"Called At\":\"2025-08-29T07:50:46.354Z\",\"Call Duration\":\"0\",\"Call Status\":\"ended\",\"Call Summary\":\"The user called to book a meeting with Elumi, providing their name and email address after several attempts to confirm the spelling. A meeting was successfully scheduled for today at 2 PM, with the user requesting a phone notification and a calendar invite sent to their email.\",\"Lead Score\":\"0\",\"Transcript\":\"AI: Hello. This is the Elumi assistant. Please note, this call may be recorded for quality and training purposes. I'm here to help explain our AI voice agent services and also understand your business needs. Would you like to continue?\\nUser: Hello. Book a meeting.\\nAI: I'd be happy to help with that. Could I have your full name, please?\\nUser: Rajee.\\nAI: Thank you, Roger. Could you please confirm your phone number?\\nUser: No. I will provide only my email address.\\nAI: That's okay. Please share your email address, and I'll note it down.\\nUser: R a j I r u t h 1 8. At g mail dot com.\\nAI: Thank you for that. Just to confirm, is your email address roger ruth 1 teen at g mail dot com?\\nUser: Gong g looked 18. At g mail dot com or a j I r u t h 1 8.\\nAI: Thanks for clarifying. Um, just to confirm, your email is r a j I r u h minus 1 minus 8 at g mail dot com.\\nUser: No. You are again and again, you are confusing. R e a j I r u t h 1 8. At gmail dot com.\\nAI: I apologize for the confusion. Just to confirm, your email address is r e a j I r u t h 1 8 at g mail dot com. Is that correct?\\nUser: Yes. Uh, r r u t h. 1 8.\\nAI: Thank you for confirming. So your email is r a j I r u t h 1 8 at g mail dot com. Got it. Now could you please tell me the\\nUser: Yes.\\nAI: could you please share your business name and, uh, the industry you operate in?\\nUser: No. I will provide that during the meeting.\\nAI: That's perfectly fine. When would you like to schedule the meeting? Please provide your prefer\\nUser: Today, I think you have. Today, 2 PM.\\nAI: great. I'll schedule a meeting for today at 2 PM. You also let me know if there's a preferred method to reach you? Such as phone or email?\\nUser: Phone. And send me my notification this calendar invite.\\nAI: I've scheduled the meeting for today at 2 PM. And I'll send the calendar invite\\nAI: to to your email at r e a j I r u t h 1 8\\nAI: at g mail dot com. You can find the meeting details here, h t t p s w w dot Google dot com slash calendar event eid. Z w z r n j, force ma'am, w n a j m, aj via l b j r t, tai z r l z g at l a o w m g c m f q, XROA. X\\nUser: This is please stop and understand. I understand.\\nAI: I sincerely apologize\\nUser: Thank you.\\nAI: Thank you for your understanding. If you need anything else, feel free to ask. Have a great day.\\nUser: Thank you.\\nAI: You're welcome. Have a wonderful day.\\n\"}",
+              "displayName": "{\"Phone\":\"N/A\",\"Name\":\"Unknown\",\"Called At\":\"2025-08-29T07:50:46.354Z\",\"Call Duration\":\"0\",\"Call Status\":\"ended\",\"Call Summary\":\"The user called to book a meeting with Elumi, providing their name and email address after several attempts to confirm the spelling. A meeting was successfully scheduled for today at 2 PM, with the user requesting a phone notification and a calendar invite sent to their email.\",\"Lead Score\":\"0\",\"Transcript\":\"AI: Hello. This is the Elumi assistant. Please note, this call may be recorded for quality and training purposes. I'm here to help explain our AI voice agent services and also understand your business needs. Would you like to continue?\\nUser: Hello. Book a meeting.\\nAI: I'd be happy to help with that. Could I have your full name, please?\\nUser: Rajee.\\nAI: Thank you, Roger. Could you please confirm your phone number?\\nUser: No. I will provide only my email address.\\nAI: That's okay. Please share your email address, and I'll note it down.\\nUser: R a j I r u t h 1 8. At g mail dot com.\\nAI: Thank you for that. Just to confirm, is your email address roger ruth 1 teen at g mail dot com?\\nUser: Gong g looked 18. At g mail dot com or a j I r u t h 1 8.\\nAI: Thanks for clarifying. Um, just to confirm, your email is r a j I r u h minus 1 minus 8 at g mail dot com.\\nUser: No. You are again and again, you are confusing. R e a j I r u t h 1 8. At gmail dot com.\\nAI: I apologize for the confusion. Just to confirm, your email address is r e a j I r u t h 1 8 at g mail dot com. Is that correct?\\nUser: Yes. Uh, r r u t h. 1 8.\\nAI: Thank you for confirming. So your email is r a j I r u t h 1 8 at g mail dot com. Got it. Now could you please tell me the\\nUser: Yes.\\nAI: could you please share your business name and, uh, the industry you operate in?\\nUser: No. I will provide that during the meeting.\\nAI: That's perfectly fine. When would you like to schedule the meeting? Please provide your prefer\\nUser: Today, I think you have. Today, 2 PM.\\nAI: great. I'll schedule a meeting for today at 2 PM. You also let me know if there's a preferred method to reach you? Such as phone or email?\\nUser: Phone. And send me my notification this calendar invite.\\nAI: I've scheduled the meeting for today at 2 PM. And I'll send the calendar invite\\nAI: to to your email at r e a j I r u t h 1 8\\nAI: at g mail dot com. You can find the meeting details here, h t t p s w w dot Google dot com slash calendar event eid. Z w z r n j, force ma'am, w n a j m, aj via l b j r t, tai z r l z g at l a o w m g c m f q, XROA. X\\nUser: This is please stop and understand. I understand.\\nAI: I sincerely apologize\\nUser: Thank you.\\nAI: Thank you for your understanding. If you need anything else, feel free to ask. Have a great day.\\nUser: Thank you.\\nAI: You're welcome. Have a wonderful day.\\n\"}",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        512,
+        -128
+      ],
+      "id": "2e273c4d-516e-4f2c-9ff6-6f9894bc9259",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GzUgHkwshnNXltNM",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Fetch Transcripts": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "39de4340-b7d2-4571-9bf0-f5242f2fb826",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78009fc29414294678e81009d661eb841edc07c8d795d800a134b1c710f7805e"
+  },
+  "id": "IZXYq6CqgnORmvjL",
+  "tags": [
+    {
+      "createdAt": "2025-08-29T15:47:41.118Z",
+      "updatedAt": "2025-08-29T15:47:41.118Z",
+      "id": "6z7eowVtjYscWCnr",
+      "name": "Testing"
+    }
+  ]
+}
