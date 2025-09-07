@@ -12,6 +12,10 @@
 - **Trigger:** Webhook from Elevenlabs
 - **Actions:** Books meeting with Name, Title, description. Send mail to users with notification and calendar invite. Also, books meeting in our own calendar (Company)
 
+### Transcripts.json
+- **Purpose:** Get conversation Transcripts everytime(every 1 hour) when user calls
+- **Trigger:** Vapi-Schedule Trigger (as no webhook option in Vapi)
+- **Actions:** Collect details like Name, phone number, called date if possible
 
 ## How to Use These Workflows
 
