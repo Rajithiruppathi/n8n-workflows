@@ -17,6 +17,13 @@
 - **Trigger:** Vapi-Schedule Trigger (as no webhook option in Vapi)
 - **Actions:** Collect details like Name, phone number, called date if possible
 
+### Supabase_RAG_AI_Agent (1).json
+- **Purpose:** Get files from google drive, both new and updated files
+- **Trigger:** Calling from Elevenlabs agent to ask for details
+- **Actions:** Once connected, whenever we create new file or update an existing file, it automatically fetch them if needed.
+ 
+
+
 ## How to Use These Workflows
 
 1. Download the JSON file you want
